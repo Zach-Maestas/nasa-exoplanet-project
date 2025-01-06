@@ -1,3 +1,6 @@
+import launchesDatabase from './launches.mongo.js';
+import planets from './planets.mongo.js';
+
 const launches = new Map();
 
 let latestFlightNumber = 100;
@@ -8,19 +11,36 @@ const launch = {
     rocket: 'Explorer IS1',
     launchDate: new Date('December 27, 2030'), // Correct date format
     target: 'Kepler-442 b',
-    customer: ['NASA', 'ZTM'],
+    customers: ['NASA', 'ZTM'],
     upcoming: true,
     success: true,
 };
 
-launches.set(launch.flightNumber, launch);
+saveLaunch(launch);
 
 export function existsLaunchWithId(launchId) {
     return launches.has(launchId);
 }
 
-export function getAllLaunches() {
-    return Array.from(launches.values());
+export async function getAllLaunches() {
+    return await launchesDatabase
+        .find({}, { _id: 0, __v: 0 });
+}
+
+async function saveLaunch(launch) {
+    const planet = await planets.findOne({
+        keplerName: launch.target,
+    });
+
+    if (!planet){
+        throw new Error('No matching planet was found');
+    }
+
+    await launchesDatabase.updateOne({
+        flightNumber: launch.flightNumber,
+    }, launch, {
+        upsert: true,
+    });
 }
 
 export function addNewLaunch(launch) {
