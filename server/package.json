@@ -5,11 +5,11 @@
   "main": "src/server.js",
   "type": "module",
   "jest": {
-    "transform": {}
+    "testEnvironment": "node"
   },
   "scripts": {
     "watch": "nodemon src/server.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles",
     "test-watch": "jest --watchAll",
     "start": "node src/server.js",
     "cluster": "pm2 start src/server.js -i max"
