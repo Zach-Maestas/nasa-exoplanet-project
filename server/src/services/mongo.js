@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv";
 
-const MONGO_URL = 'mongodb+srv://zacharymaestas03:Z091303m%21%40@exoplanets.f9dv7.mongodb.net/nasa?retryWrites=true&w=majority&appName=Exoplanets';
+dotenv.config();
+
+const MONGO_URL = process.env.MONGO_URL;
 
 mongoose.connection.once('open', () => {
     console.log('Mongoose Connected...');
