@@ -4,6 +4,8 @@ import { mongoConnect, mongoDisconnect } from '../../services/mongo.js';
 
 describe('Launches API', () => {
 
+    const LAUNCHES_PATH = '/v1/launches';
+
     beforeAll(async () => {
         await mongoConnect();
     });
@@ -15,7 +17,7 @@ describe('Launches API', () => {
     describe('Test GET /launches', () => {
         test('Should response with 200 success', async () => {
             const response = await request(app)
-                .get('/launches')
+                .get(LAUNCHES_PATH)
                 .expect('Content-Type', /json/);
             expect(response.statusCode).toBe(200);
         });
@@ -44,7 +46,7 @@ describe('Launches API', () => {
 
         test('Should response with 201 created', async () => {
             const response = await request(app)
-                .post('/launches')
+                .post(LAUNCHES_PATH)
                 .send(completeLaunchData)
                 .expect('Content-Type', /json/)
                 .expect(201);
@@ -58,7 +60,7 @@ describe('Launches API', () => {
 
         test('Should catch missing required properties', async () => {
             const response = await request(app)
-                .post('/launches')
+                .post(LAUNCHES_PATH)
                 .send(launchDataWithoutDate)
                 .expect('Content-Type', /json/)
                 .expect(400);
@@ -70,7 +72,7 @@ describe('Launches API', () => {
 
         test('Should catch invalid dates', async () => {
             const response = await request(app)
-                .post('/launches')
+                .post(LAUNCHES_PATH)
                 .send(launchDataWithInvalidDate)
                 .expect('Content-Type', /json/)
                 .expect(400);

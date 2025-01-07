@@ -1,23 +1,99 @@
+import axios from 'axios';
 import launchesDatabase from './launches.mongo.js';
 import planets from './planets.mongo.js';
 
 const DEFAULT_FLIGHT_NUMBER = 100;
 
+const SPACEX_URL = 'https://api.spacexdata.com/v4/launches/query';
+
 const launch = {
-    flightNumber: 100,
-    mission: 'Kepler Exploration X',
-    rocket: 'Explorer IS1',
-    launchDate: new Date('December 27, 2030'), // Correct date format
-    target: 'Kepler-442 b',
-    customers: ['NASA', 'ZTM'],
-    upcoming: true,
-    success: true,
+    flightNumber: 100, // flight_number
+    mission: 'Kepler Exploration X', // name
+    rocket: 'Explorer IS1', // rocket.name 
+    launchDate: new Date('December 27, 2030'), // date_local
+    target: 'Kepler-442 b', // N/A
+    customers: ['NASA', 'ZTM'], // payload.customers for each payload
+    upcoming: true, // upcoming
+    success: true, // success
 };
 
 saveLaunch(launch);
 
+export async function loadLaunchData() {
+    const firstLaunch = await findLaunch({
+        flightNumber: 1,
+        rocket: 'Falcon 1',
+        mission: 'FalconSat',
+    });
+
+    if (firstLaunch) {
+        console.log('Launch data already loaded');
+        return;
+    } else {
+        await populateLaunches();
+    }
+}
+
+async function populateLaunches() {
+    console.log('Downloading launch data...');
+    const res = await querySpaceXLaunches();
+
+    const launchDocs = res.data.docs;
+    for (const launchDoc of launchDocs) {
+        const payloads = launchDoc.payloads;
+        const customers = payloads.flatMap((payload) => {
+            return payload.customers;
+        });
+
+        const launch = {
+            flightNumber: launchDoc.flight_number,
+            mission: launchDoc.name,
+            rocket: launchDoc.rocket.name,
+            launchDate: new Date(launchDoc.date_local),
+            upcoming: launchDoc.upcoming,
+            success: launchDoc.success,
+            customers,
+        };
+
+        console.log(`${launch.flightNumber} ${launch.mission}`);
+
+        await saveLaunch(launch);
+    }
+}
+
+async function querySpaceXLaunches() {
+    try {
+        return await axios.post(SPACEX_URL, {
+            query: {},
+            options: {
+                pagination: false,
+                populate: [
+                    {
+                        path: 'rocket',
+                        select: {
+                            name: 1
+                        }
+                    },
+                    {
+                        path: 'payloads',
+                        select: {
+                            customers: 1
+                        }
+                    }
+                ]
+            }
+        });
+    } catch (err) {
+        throw new Error('Failed to load launch data');
+    }
+}
+
+async function findLaunch(filter) {
+    return await launchesDatabase.findOne(filter);
+}
+
 export async function existsLaunchWithId(launchId) {
-    return await launchesDatabase.findOne({
+    return await findLaunch({
         flightNumber: launchId,
     });
 }
@@ -39,7 +115,7 @@ export async function getAllLaunches() {
         .find({}, { _id: 0, __v: 0 });
 }
 
-async function saveLaunch(launch) {
+export async function scheduleNewLaunch(launch) {
     const planet = await planets.findOne({
         keplerName: launch.target,
     });
@@ -47,15 +123,7 @@ async function saveLaunch(launch) {
     if (!planet) {
         throw new Error('No matching planet was found');
     }
-
-    await launchesDatabase.findOneAndUpdate({
-        flightNumber: launch.flightNumber,
-    }, launch, {
-        upsert: true,
-    });
-}
-
-export async function scheduleNewLaunch(launch) {
+    
     const newFlightNumber = await getLatestFlightNumber() + 1;
 
     const newLaunch = Object.assign(launch, {
@@ -67,6 +135,14 @@ export async function scheduleNewLaunch(launch) {
     });
 
     await saveLaunch(newLaunch);
+}
+
+async function saveLaunch(launch) {
+    await launchesDatabase.findOneAndUpdate({
+        flightNumber: launch.flightNumber,
+    }, launch, {
+        upsert: true,
+    });
 }
 
 export async function abortLaunchById(launchId) {
