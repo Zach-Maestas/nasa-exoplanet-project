@@ -18,12 +18,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "nasa-project": "file:"
+  },
   "devDependencies": {
     "concurrently": "^9.1.0",
     "cross-env": "^7.0.3"
-  },
-  "dependencies": {
-    "morgan": "^1.10.0",
-    "nasa-project": "file:"
   }
 }
