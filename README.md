@@ -2,7 +2,9 @@
 
 ## Overview
 
-The **NASA Exoplanet Project** is a web application developed with Node.js and React that simulates launches to habitable exoplanets. It provides users with an interactive interface to explore potential interstellar missions.
+The **NASA Exoplanet Project** is a web application developed with Node.js that simulates launches to habitable exoplanets. It provides users with an interactive interface to explore potential interstellar missions.
+
+**Frontend Credit to Zero to Mastery Academy**
 
 ## Features
 
